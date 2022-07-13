@@ -1,0 +1,32 @@
+Differential Genes Expression Using EdgeR
+=========================================
+
+library(edgeR)
+library(affy)
+library(affycoretools)
+raw.data <- read.csv("Readcount.csv", header=T, row.names=1)	#read readcounts data
+expt1 <- rep("NORM", each=15)	#design experiment
+expt2 <- rep("DIS", each=19)
+expt <- c(expt1, expt2)
+expt <- factor(expt)
+boxplot(log2(raw.data[,8:42]+0.01))
+points(log2(colMeans(raw.data[,8:42]+0.01)), col="blue", pch=18)
+plotDensity(log2(raw.data[,8:42]+0.01))
+library.sizes <- colSums(raw.data[,8:42])
+barplot(library.sizes)
+fpkm.data <- matrix(NA,nrow=nrow(raw.data),ncol=34,dimnames=list(row.names(raw.data),colnames(raw.data[,8:42])))	#calculate fpkm
+for (i in 1:34) {fpkm.data[,i] <- raw.data[,8+i] / (raw.data$Length/1000) / (library.sizes[i]/1000000)
+deg <- DGEList(counts=as.matrix(raw.data[,8:42]), lib.size=library.sizes, group=expt)
+deg <- calcNormFactors(deg)
+deg <- estimateCommonDisp(deg)
+nbt <- exactTest(deg,pair=c("NORM","DIS"))	#performs gene wise exact test between control and disease samples
+nbt.corrected <- topTags(nbt,n=Inf)
+write.csv(nbt.corrected$table,file="NBT.csv") 	#saves exact test results
+sum(nbt.corrected$table$FDR<0.05)
+deg$ID <- rownames(deg)
+raw.data$ID <- rownames(raw.data)
+deg_with.gene.names <- merge(raw.data, deg, by='ID', all.ID=T)
+deg_upregulated <- deg[(deg$FDR<0.05 & deg$logFC>0),]
+deg_downregulated <- deg[(deg$FDR<0.05 & deg$logFC<0),]
+write.csv(deg_upregulated, file="UPRegulated.csv")	#saves upregulated genes
+write.csv(deg_downregulated, file="DownRegulated.csv")	#saves down regulated genes
