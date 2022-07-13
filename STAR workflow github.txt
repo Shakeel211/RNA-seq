@@ -1,0 +1,49 @@
+
+DOWNLOAD STAR
+=============
+
+# Get latest STAR source from releases
+wget https://github.com/alexdobin/STAR/archive/2.7.9a.tar.gz
+
+
+INSTALL
+=======
+tar -xzf 2.7.9a.tar.gz
+cd STAR-2.7.9a
+
+# Alternatively, get STAR source using git
+git clone https://github.com/alexdobin/STAR.git
+
+##To test installation:  bin/Linux_x86_64/STAR --help 
+
+
+STAR Commands
+===============
+
+1. Generate index of refernce genome
+
+./STAR --runMode genomeGenerate --genomeDir [out directory] --genomeFastaFiles hg38_p13.fa --sjdbOverhang 100 --sjdbGTFfile gencode.v38.annotation.gtf --runThreadN 8
+
+## IT TAKES VERY LONG TIME, DEPENDING ON CPUs
+
+
+2. Alingment First Pass 
+
+./STAR --genomeDir [out director of command 1] --readFilesIn File_1.fastq.gz File_2.fastq.gz --runThreadN 24 --outFilterMultimapScoreRange 1 --outFilterMultimapNmax 20 --outFilterMismatchNmax 10 --alignIntronMax 500000 --alignMatesGapMax 1000000 --sjdbScore 2 --alignSJDBoverhangMin 1 --genomeLoad NoSharedMemory --readFilesCommand zcat --outFilterMatchNminOverLread 0.33 --outFilterScoreMinOverLread 0.33 --sjdbOverhang 100 --outSAMstrandField intronMotif --outSAMtype None --outSAMmode None
+
+
+3.  Intermediate Index Generation	
+
+./STAR --runMode genomeGenerate --genomeDir [out director of command 1] --genomeFastaFiles hg38_p13.fa --sjdbOverhang 100 --runThreadN 24 --sjdbFileChrStartEnd sjdbList.fromGTF.out.tab
+
+
+4.  Alignment 2nd Pass
+
+./STAR --genomeDir  [out director of command 1] --readFilesIn File_1.fastq.gz File_2.fastq.gz --runThreadN 24 --outFilterMultimapScoreRange 1 --outFilterMultimapNmax 20 --outFilterMismatchNmax 10 --alignIntronMax 500000 --alignMatesGapMax 1000000 --sjdbScore 2 --alignSJDBoverhangMin 1 --genomeLoad NoSharedMemory --limitBAMsortRAM 0 --readFilesCommand zcat --outFilterMatchNminOverLread 0.33 --outFilterScoreMinOverLread 0.33 --sjdbOverhang 100 --outSAMstrandField intronMotif --outSAMattributes NH HI NM MD AS XS --outSAMunmapped Within --outSAMtype BAM SortedByCoordinate --outSAMheaderHD @HD VN:1.4 --outSAMattrRGline ID: Sample1 SM: Sample1
+
+
+
+Read Counts in bam files
+========================
+
+./featureCounts -t gene -g gene_name -p -C -a gencode.v38.annotation.gtf.gz -o Sample1_readCounts Sample1.bam Sample2.bam Sample3.bam ..... .....
